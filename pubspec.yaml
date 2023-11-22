@@ -1,0 +1,38 @@
+name: minha_turma
+description: A new Flutter project.
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.1.5 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+
+  cupertino_icons: ^1.0.2
+  google_nav_bar: ^5.0.6
+  sqflite: ^2.3.0
+  flutter_dialogs: ^3.0.0
+  image_picker: ^1.0.4
+  image: ^3.0.1
+  crypto: ^3.0.1
+  path_provider: ^2.0.5
+  uuid: ^4.2.1
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+
+  flutter_lints: ^2.0.0
+
+flutter:
+
+  uses-material-design: true
+  assets:
+  - assets/mt_logoinit.png
+  - assets/mt_background.png
+  - assets/turma1.png
