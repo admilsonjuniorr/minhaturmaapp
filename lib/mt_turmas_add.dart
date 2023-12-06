@@ -4,8 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:uuid/uuid.dart';
-
 import 'utils/mt_db.dart';
 
 class TurmasAddPage extends StatefulWidget {
@@ -19,9 +17,15 @@ class _TurmasAddPageState extends State<TurmasAddPage> {
   String materia = '';
   String hashImg = '';
   XFile? pickedFile;
+  late MinhaTurmaDatabase _databaseManager;
+
+  @override
+  void initState() {
+    super.initState();
+    _databaseManager = MinhaTurmaDatabase();
+  }
 
   Future<void> _showImagePickerDialog(BuildContext context) async {
-    await Future.delayed(Duration.zero);
     final picker = ImagePicker();
     pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
@@ -34,7 +38,7 @@ class _TurmasAddPageState extends State<TurmasAddPage> {
   }
 
   Future<void> _resizeImage(String path) async {
-    final bytes = File(path).readAsBytesSync();
+    final bytes = await File(path).readAsBytes();
     final image = img.decodeImage(Uint8List.fromList(bytes))!;
     final resizedImage = img.copyResize(image, width: 300, height: 160);
 
@@ -44,28 +48,33 @@ class _TurmasAddPageState extends State<TurmasAddPage> {
       hashImg = hash;
     });
 
+    final appDocumentsDirectory = await getApplicationDocumentsDirectory();
     final fileName = 'image_$hash.png';
-    final filePath =
-        '/data/user/0/com.example.minha_turma/app_flutter/$fileName';
+    final filePath = '${appDocumentsDirectory.path}/$fileName';
 
-    File(filePath).writeAsBytesSync(img.encodePng(resizedImage));
+    await File(filePath).writeAsBytes(img.encodePng(resizedImage));
 
     pickedFile = XFile(filePath);
   }
 
   Future<void> _addToDatabase() async {
     if (turma.isNotEmpty && materia.isNotEmpty && hashImg.isNotEmpty) {
-      final databaseManager = MinhaTurmaDatabase.instance;
-      await databaseManager.insertTurma(turma, materia, hashImg);
-      final turmas = await databaseManager.getTurmas();
-      print('Dados no banco: $turmas');
+      final fileName = 'image_$hashImg.png';
+      final filePath = await _resizeImage(selectedImage!);
+      await _databaseManager.insertTurma(turma, materia, fileName);
+      final turmas = await _databaseManager.getTurmas();
+      print('[INFO][mt_turmasadd.dart]: Dados no banco: $turmas');
+      Navigator.of(context).pop();
+    } else {
+      print(
+          '[INFO][mt_turmasadd.dart]: Erro: Preencha todos os campos antes de criar uma turma.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    print('criarturma.dart');
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Text('Criar turma'),
       ),
@@ -76,22 +85,21 @@ class _TurmasAddPageState extends State<TurmasAddPage> {
             end: Alignment.bottomCenter,
             stops: [0.3385, 0.6354, 0.875],
             colors: [
-              Color.fromRGBO(85, 71, 168, 0.74),
-              Color(0xFF5E549E),
-              Color.fromRGBO(0, 0, 0, 0.86),
+              Color.fromRGBO(85, 71, 168, 0.80),
+              Color.fromRGBO(94, 84, 158, 1),
+              Color.fromRGBO(0, 0, 0, 0.99),
             ],
           ),
         ),
         child: Column(
           children: [
-            // Header (Imagem)
             Container(
               margin: const EdgeInsets.all(16.0),
               height: 180,
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.),
+                    color: Colors.black.withOpacity(0.3),
                     blurRadius: 6,
                     offset: Offset(0, 3),
                   ),
@@ -127,7 +135,6 @@ class _TurmasAddPageState extends State<TurmasAddPage> {
                 ],
               ),
             ),
-            // Container Cinza com Margem (Botão Criar e Inputs)
             Expanded(
               child: Container(
                 margin: const EdgeInsets.all(16.0),
@@ -144,8 +151,12 @@ class _TurmasAddPageState extends State<TurmasAddPage> {
                       children: [
                         ElevatedButton(
                           onPressed: () async {
+                            print(
+                                'Botão "Criar" pressionado'); // Mensagem de depuração
                             await _addToDatabase();
-                            Navigator.of(context).pop();
+
+                            print(
+                                'Operação _addToDatabase concluída'); // Mensagem de depuração
                           },
                           child: Text(
                             'Criar',

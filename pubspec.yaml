@@ -22,6 +22,14 @@ dependencies:
   crypto: ^3.0.1
   path_provider: ^2.0.5
   uuid: ^4.2.1
+  provider: ^6.1.1
+  fl_chart: ^0.65.0
+  file_picker: ^4.0.10
+  path: ^1.8.3
+  permission_handler: ^11.1.0
+  file_selector: ^1.0.1
+  fluttertoast: ^8.0.8
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -34,5 +42,7 @@ flutter:
   uses-material-design: true
   assets:
   - assets/mt_logoinit.png
+  - assets/mt_cadastro.png
   - assets/mt_background.png
   - assets/turma1.png
+  - assets/professor1.png

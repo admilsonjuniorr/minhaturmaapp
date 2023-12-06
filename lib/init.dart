@@ -1,17 +1,36 @@
 import 'package:flutter/material.dart';
+import 'mt_cadastrouser.dart';
 import 'mt_loginpage.dart';
 
 class InitPage extends StatelessWidget {
   const InitPage({Key? key}) : super(key: key);
-
   @override
   Widget build(BuildContext context) {
     print('[PAGE] => init.dart');
+    final teste = MediaQuery.of(context).size.height * 0.15;
+
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        body: Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/mt_background.png'),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Center(
+              child: Image.asset(
+                'assets/mt_logoinit.png',
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.45,
+              ),
+            ),
+          ),
+              SizedBox(height:teste),
+
           Padding(
             padding: const EdgeInsets.all(20.0),
             child: ElevatedButton(
@@ -40,7 +59,8 @@ class InitPage extends StatelessWidget {
                   ),
                 );
               },
-              child: Text(
+              child: 
+              Text(
                 'ENTRAR',
                 style: TextStyle(
                   color: Colors.black,
@@ -68,7 +88,7 @@ class InitPage extends StatelessWidget {
                   context,
                   PageRouteBuilder(
                     pageBuilder: (context, animation, secondaryAnimation) {
-                      return LoginPage();
+                      return CadastroUserPage();
                     },
                     transitionsBuilder:
                         (context, animation, secondaryAnimation, child) {
@@ -109,6 +129,6 @@ class InitPage extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }

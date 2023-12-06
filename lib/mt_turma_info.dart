@@ -2,14 +2,18 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'utils/mt_db.dart';
+import 'mt_alunos_info.dart';
 
 class TurmaInfoPage extends StatefulWidget {
   final String turma;
   final String materia;
   final String hashImg;
 
-  TurmaInfoPage(
-      {required this.turma, required this.materia, required this.hashImg});
+  TurmaInfoPage({
+    required this.turma,
+    required this.materia,
+    required this.hashImg,
+  });
 
   @override
   _TurmaInfoPageState createState() => _TurmaInfoPageState();
@@ -17,21 +21,53 @@ class TurmaInfoPage extends StatefulWidget {
 
 class _TurmaInfoPageState extends State<TurmaInfoPage> {
   String? _selectedAluno;
+  List<Map<String, dynamic>> _alunosDaTurma = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 1000), () {
+      _loadAlunosDaTurma();
+    });
+  }
+
+  void _loadAlunosDaTurma() async {
+    final db = MinhaTurmaDatabase();
+    final nomeTurma = widget.turma;
+    final alunosDaTurma = await db.getAlunosDaTurma(nomeTurma);
+    setState(() {
+      _alunosDaTurma = alunosDaTurma;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Detalhes da Turma'),
+        body: Container(
+      padding: EdgeInsets.only(top: 40),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: [
+            Color.fromRGBO(0, 0, 0, 1),
+            Color.fromRGBO(94, 84, 158, 1),
+            Color.fromRGBO(85, 71, 168, 0.74),
+          ],
+        ),
       ),
-      body: Column(
+      child: Column(
         children: [
           // Header
           FutureBuilder<String>(
             future: _getImageFilePath(widget.hashImg),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return Container(); // Pode exibir um indicador de carregamento aqui
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
               } else if (snapshot.hasError) {
                 return Text('Error: ${snapshot.error}');
               } else {
@@ -40,7 +76,7 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
                   children: [
                     Container(
                       margin: EdgeInsets.symmetric(horizontal: 16.0),
-                      height: 100, // Ajuste a altura conforme necessário
+                      height: 160,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8.0),
                         image: DecorationImage(
@@ -48,7 +84,8 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
                           fit: BoxFit.cover,
                           colorFilter: ColorFilter.mode(
                             Colors.black.withOpacity(
-                                0.4), // Ajuste a opacidade conforme necessário
+                              0.6,
+                            ),
                             BlendMode.dstATop,
                           ),
                         ),
@@ -70,15 +107,31 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.white, // Cor da sombra
+                                    offset: Offset(1,
+                                        1), // Deslocamento da sombra em relação ao texto
+                                    blurRadius: 2, // Raio do desfoque da sombra
+                                  ),
+                                ],
                               ),
                             ),
                             SizedBox(height: 10),
                             Text(
                               'Matéria: ${widget.materia}',
                               style: TextStyle(
-                                fontSize: 16,
+                                fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: Colors.black,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.white, // Cor da sombra
+                                    offset: Offset(1,
+                                        1), // Deslocamento da sombra em relação ao texto
+                                    blurRadius: 2, // Raio do desfoque da sombra
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -102,61 +155,104 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
             ),
           ),
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _getAlunosDaTurma(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Erro: ${snapshot.error}');
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Text('Nenhum aluno associado à turma.');
-                } else {
-                  final alunosDaTurma = snapshot.data!;
-
-                  return ListView.builder(
-                    itemCount: alunosDaTurma.length,
-                    itemBuilder: (context, index) {
-                      final aluno = alunosDaTurma[index];
-                      return ListTile(
-                        title: Text(aluno['nome_aluno']),
-                        subtitle: Text(aluno['codigo']),
-                      );
-                    },
-                  );
-                }
-              },
+            child: Stack(
+              children: [
+                // Lista de Alunos
+                _alunosDaTurma.isEmpty
+                    ? Center(
+                        child: Text(
+                        'Nenhum aluno associado à turma.',
+                        style: TextStyle(color: Colors.white),
+                      ))
+                    : ListView.builder(
+                        itemCount: _alunosDaTurma.length,
+                        itemBuilder: (context, index) {
+                          final aluno = _alunosDaTurma[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => DetalhesAlunoPage(
+                                    nomeAluno: aluno['nome_aluno'],
+                                    codigoAluno: aluno['codigo_aluno'],
+                                    turmaNome: widget.turma,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 8.0,
+                              ),
+                              padding: EdgeInsets.all(16.0),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    aluno['nome_aluno'],
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 8.0),
+                                  Text(
+                                    'Código: ${aluno['codigo_aluno']}',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                // Indicador de Carregamento
+                if (_isLoading)
+                  Container(
+                    color: const Color.fromARGB(255, 14, 9, 9).withOpacity(0.8),
+                    child: Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+              ],
             ),
           ),
           // Footer
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                FloatingActionButton(
-                  onPressed: () {
-                    _showUserSelectionPopup(context);
-                  },
-                  child: Icon(Icons.add),
-                ),
-              ],
+          Align(
+            alignment: Alignment.bottomRight,
+            child: Container(
+              margin: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: FloatingActionButton(
+                onPressed: () {
+                  _showUserSelectionPopup(context);
+                },
+                child: Icon(Icons.add),
+              ),
             ),
           ),
         ],
       ),
-    );
+    ));
   }
 
   Future<String> _getImageFilePath(String hashImg) async {
     final appDir = await getApplicationDocumentsDirectory();
-    final fileName = 'image_$hashImg.png';
+    final fileName = '$hashImg';
     return '${appDir.path}/$fileName';
   }
 
   void _showUserSelectionPopup(BuildContext context) async {
-    final db = MinhaTurmaDatabase(); // Use a classe MinhaTurmaDatabase
-    final alunos = await db.getAlunos();
+    final db = MinhaTurmaDatabase();
+    final alunos = await db.getAlunosNaoAssociados(widget.turma);
 
     showDialog(
       context: context,
@@ -164,13 +260,11 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              title: Text('Selecione o usuário'),
               content: Container(
                 padding: EdgeInsets.all(8.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Escolha um usuário:'),
                     _buildUserDropdown(alunos, setState),
                   ],
                 ),
@@ -217,13 +311,7 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
     );
   }
 
-  Future<List<Map<String, dynamic>>> _getAlunosDaTurma() async {
-    final db = MinhaTurmaDatabase();
-    final nomeTurma = widget.turma;
-    return await db.getAlunosDaTurma(nomeTurma);
-  }
-
-  void _associateAlunoToTurma() async {
+  Future<void> _associateAlunoToTurma() async {
     final db = MinhaTurmaDatabase();
 
     if (_selectedAluno != null) {
@@ -239,19 +327,25 @@ class _TurmaInfoPageState extends State<TurmaInfoPage> {
           final aluno = alunoList.first;
 
           print(
-              'Tentando associar aluno: ${aluno['nome_aluno']} à turma: ${widget.turma}');
+              '[INFO][mt_turmas_info.dart]: Tentando associar aluno: ${aluno['nome_aluno']} à turma: ${widget.turma}');
 
           await db.insertAlunoNaTurma(aluno['nome_aluno'], idTurma);
-          print('Aluno associado à turma com sucesso');
+          print(
+              '[INFO][mt_turmas_info.dart]: [INFO][mt_turmas_info.dart]: Aluno associado à turma com sucesso');
 
-          // Atualiza a lista de alunos associados após adicionar um novo aluno
-          setState(() {});
+          _loadAlunosDaTurma();
+
+          setState(() {
+            _selectedAluno = null;
+          });
         } else {
           final aluno = alunoList.first;
-          print('Aluno ${aluno['nome_aluno']} não encontrado');
+          print(
+              '[INFO][mt_turmas_info.dart]: [INFO][mt_turmas_info.dart]: Aluno ${aluno['nome_aluno']} não encontrado');
         }
       } catch (e) {
-        print('Erro ao associar aluno à turma: $e');
+        print(
+            '[INFO][mt_turmas_info.dart]: [INFO][mt_turmas_info.dart]: Erro ao associar aluno à turma: $e');
       }
     }
   }
